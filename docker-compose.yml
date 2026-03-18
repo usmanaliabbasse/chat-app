@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: chat-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - chat-network
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "YourStrong@Passw0rd" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: chat-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - chat-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Uncomment to run API in Docker
+  # api:
+  #   build:
+  #     context: ./Backend/ChatSupportApi
+  #     dockerfile: Dockerfile
+  #   container_name: chat-api
+  #   ports:
+  #     - "5000:80"
+  #     - "5001:443"
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ChatSupportDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
+  #     - ConnectionStrings__Redis=redis:6379
+  #   depends_on:
+  #     sqlserver:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - chat-network
+
+volumes:
+  sqlserver-data:
+  redis-data:
+
+networks:
+  chat-network:
+    driver: bridge

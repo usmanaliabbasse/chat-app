@@ -1,0 +1,106 @@
+<div class="chat-container">
+  <div class="chat-header">
+    <h1>💬 Chat Support System</h1>
+    <p class="subtitle">Advanced Queue Management with Intelligent Agent Assignment</p>
+  </div>
+
+  <!-- Initial State -->
+  <div *ngIf="status === 'initial'" class="chat-form">
+    <div class="form-group">
+      <label for="userId">Your User ID:</label>
+      <input 
+        id="userId" 
+        type="text" 
+        [(ngModel)]="userId" 
+        placeholder="Enter your user ID"
+        class="form-control"
+      />
+    </div>
+    <button (click)="startChat()" class="btn btn-primary">Start Chat Support</button>
+  </div>
+
+  <!-- Requesting State -->
+  <div *ngIf="status === 'requesting'" class="status-message">
+    <div class="spinner"></div>
+    <p>Requesting chat session...</p>
+  </div>
+
+  <!-- Queued State -->
+  <div *ngIf="status === 'queued'" class="status-message">
+    <div class="queue-icon">⏳</div>
+    <h2>You're in the queue!</h2>
+    <p>Session ID: <strong>{{ sessionId }}</strong></p>
+    <p>Waiting for an available agent...</p>
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Active Chat -->
+  <div *ngIf="status === 'active'" class="active-chat">
+    <div class="chat-info">
+      <div class="info-item">
+        <strong>Session:</strong> {{ sessionId }}
+      </div>
+      <div class="info-item">
+        <strong>Agent:</strong> {{ assignedAgent }}
+      </div>
+      <div class="info-item">
+        <strong>Status:</strong> <span class="status-active">Active</span>
+      </div>
+    </div>
+
+    <div class="messages-container">
+      <div *ngIf="messages.length === 0" class="no-messages">
+        <p>Chat started! Say hello to your agent.</p>
+      </div>
+      
+      <div 
+        *ngFor="let msg of messages" 
+        class="message"
+        [ngClass]="{'message-self': msg.senderId === userId, 'message-other': msg.senderId !== userId}"
+      >
+        <div class="message-header">
+          <span class="message-sender">{{ msg.senderName }}</span>
+          <span class="message-time">{{ msg.timestamp | date:'short' }}</span>
+        </div>
+        <div class="message-content">{{ msg.message }}</div>
+      </div>
+    </div>
+
+    <div class="message-input">
+      <input 
+        type="text" 
+        [(ngModel)]="newMessage" 
+        (keyup.enter)="sendMessage()"
+        placeholder="Type your message..."
+        class="form-control"
+      />
+      <button (click)="sendMessage()" class="btn btn-send">Send</button>
+      <button (click)="endChat()" class="btn btn-end">End Chat</button>
+    </div>
+  </div>
+
+  <!-- Refused State -->
+  <div *ngIf="status === 'refused'" class="status-message error">
+    <div class="error-icon">❌</div>
+    <h2>Chat Request Refused</h2>
+    <p>{{ errorMessage }}</p>
+    <p class="help-text">The queue is currently full. Please try again later.</p>
+    <button (click)="resetChat()" class="btn btn-secondary">Try Again</button>
+  </div>
+
+  <!-- Inactive State -->
+  <div *ngIf="status === 'inactive'" class="status-message error">
+    <div class="error-icon">⚠️</div>
+    <h2>Session Inactive</h2>
+    <p>{{ errorMessage }}</p>
+    <button (click)="resetChat()" class="btn btn-secondary">Start New Chat</button>
+  </div>
+
+  <!-- Completed State -->
+  <div *ngIf="status === 'completed'" class="status-message success">
+    <div class="success-icon">✅</div>
+    <h2>Chat Completed</h2>
+    <p>Thank you for using our support service!</p>
+    <button (click)="resetChat()" class="btn btn-primary">Start New Chat</button>
+  </div>
+</div>
